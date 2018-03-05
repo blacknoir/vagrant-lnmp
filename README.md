@@ -1,8 +1,8 @@
-# A LEMP vagrant machine
+# A LNMP vagrant machine
 
 ## Introduction
 
-This project automates the setup of a LEMP development environment.
+This project automates the setup of a LNMP development environment.
 
 ## Requirements
 
@@ -16,26 +16,26 @@ This project automates the setup of a LEMP development environment.
 
 Building the virtual machine is this easy:
 
-    host $ git clone https://github.com/vesselinv/vagrant-lemp.git
-    host $ cd vagrant-lemp
+    host $ git clone git@github.com:blacknoir/vagrant-lnmp.git
+    host $ cd vagrant-lnmp
     host $ vagrant up --provision
 
 If the base box is not present that command fetches it first.
 
     host $ vagrant ssh
-    Welcome to Ubuntu 14.04 LTS ...
     ...
-    vagrant@vagrant:~$
+    Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent permitted by applicable law.
+    ...
+    vagrant@debian-jessie:~$
 
 Ports 80 and 3306 on guest and forwarded to 8080 and 33306 respectively.
 
 ## What's In The Box
 
-* Ubuntu 14.04 x64
+* Debian GNU/Linux 8.4 (jessie)
 * MySQL
 * Nginx
-* php5-fpm
-* phpmyadmin
+* php7.0-fpm
 
 ## Recommended Workflow
 
@@ -48,7 +48,7 @@ The recommended workflow is
 Your home folder is synced to `/home/vagrant/code` on the guest.
 
 ## Database
-* For mysql the default user is root: `mysql -u root`
+* For mysql the default user is root: `mysql -uroot -proot`
 
 ## Tutorial
 

@@ -1,19 +1,31 @@
 #!/usr/bin/env bash
 export DEBIAN_FRONTEND=noninteractive
+#export LANGUAGE=en_US.UTF-8
+#export LANG=en_US.UTF-8
+#export LC_ALL=en_US.UTF-8
+#sudo locale-gen en_US.UTF-8
 
-sudo aptitude update -q
+sudo su
 
-# Force a blank root password for mysql
-echo "mysql-server mysql-server/root_password password " | debconf-set-selections
-echo "mysql-server mysql-server/root_password_again password " | debconf-set-selections
+sudo touch /etc/apt/sources.list
+sudo cat >> /etc/apt/sources.list <<'EOF'
+deb http://packages.dotdeb.org jessie all
+deb-src http://packages.dotdeb.org jessie all
+EOF
 
-# Install mysql, nginx, php5-fpm
-sudo aptitude install -q -y -f mysql-server mysql-client nginx php5-fpm
+sudo wget -q https://www.dotdeb.org/dotdeb.gpg
+sudo apt-key add dotdeb.gpg
+sudo apt-get update -q
 
-# Install commonly used php packages
-sudo aptitude install -q -y -f php5-mysql php5-curl php5-gd php5-intl php-pear php5-imagick php5-imap php5-mcrypt php5-memcached php5-ming php5-ps php5-pspell php5-recode php5-snmp php5-sqlite php5-tidy php5-xmlrpc php5-xsl php5-xcache
+# Password for mysql server prompt
+sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password password root'
+sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password root'
 
-sudo rm /etc/nginx/sites-available/default
+# Install mysql, nginx, php7
+sudo apt-get -q -y -f --force-yes install mysql-server mysql-client nginx php7.0-fpm php7.0-mysql php7.0-curl php7.0-gd php7.0-intl php7.0-imagick php7.0-mcrypt php7.0-memcached
+sudo apt-get --purge autoremove -y --force-yes
+
+#sudo rm /etc/nginx/sites-available/default
 sudo touch /etc/nginx/sites-available/default
 
 sudo cat >> /etc/nginx/sites-available/default <<'EOF'
@@ -46,13 +58,11 @@ server {
     root /usr/share/nginx/html;
   }
 
-  # pass the PHP scripts to FastCGI server listening on /tmp/php5-fpm.sock
-  #
+  # pass the PHP scripts to FastCGI server listening on /tmp/php7.0-fpm.sock
   location ~ \.php$ {
-    try_files $uri =404;
-    fastcgi_split_path_info ^(.+\.php)(/.+)$;
-    fastcgi_pass unix:/var/run/php5-fpm.sock;
-    fastcgi_index index.php;
+    #try_files $uri =404;
+    fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    fastcgi_pass unix:/var/run/php/php7.0-fpm.sock;
     include fastcgi_params;
   }
 
@@ -62,32 +72,6 @@ server {
   location ~ /\.ht {
     deny all;
   }
-
-  ### phpMyAdmin ###
-  location /phpmyadmin {
-    root /usr/share/;
-    index index.php index.html index.htm;
-    location ~ ^/phpmyadmin/(.+\.php)$ {
-      client_max_body_size 4M;
-      client_body_buffer_size 128k;
-      try_files $uri =404;
-      root /usr/share/;
-
-      # Point it to the fpm socket;
-      fastcgi_pass unix:/var/run/php5-fpm.sock;
-      fastcgi_index index.php;
-      fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-      include /etc/nginx/fastcgi_params;
-    }
-
-    location ~* ^/phpmyadmin/(.+\.(jpg|jpeg|gif|css|png|js|ico|html|xml|txt)) {
-      root /usr/share/;
-    }
-  }
-  location /phpMyAdmin {
-    rewrite ^/* /phpmyadmin last;
-  }
-  ### phpMyAdmin ###
 }
 EOF
 
@@ -96,8 +80,5 @@ sudo cat >> /usr/share/nginx/html/info.php <<'EOF'
 <?php phpinfo(); ?>
 EOF
 
-sudo aptitude install -q -y -f phpmyadmin
-
 sudo service nginx restart
-
-sudo service php5-fpm restart
+sudo service php7.0-fpm restart
